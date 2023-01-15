@@ -9,7 +9,10 @@ const start = async () => {
 
   try {
     await mongoose.connect(process.env.DATABASE_URL);
-    app.listen(process.env.PORT || 3000, () => console.log('App started'));
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+      console.log('App started on port: '+ PORT)
+    });
   } catch (error) {
     console.error(error);
     process.exit(1);
