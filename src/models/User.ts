@@ -1,6 +1,11 @@
 import mongoose, { Document, Model } from 'mongoose';
 
-export interface IUser {
+interface DocumentResult<T> {
+  _doc?: T;
+}
+
+
+export interface IUser extends DocumentResult<IUser>  {
   name: string;
   email: string;
   password: string;

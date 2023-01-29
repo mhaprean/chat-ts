@@ -2,23 +2,19 @@ import { Request, Response, NextFunction } from 'express';
 import Quiz, { IQuiz } from '../models/Quiz';
 import Joi from 'joi';
 
-
 export const getAllQuizes = async (
   req: Request<{ id: string }>,
   res: Response,
   next: NextFunction
 ) => {
-
   try {
-
-    const quizes = await Quiz.find();
+    const quizes = await Quiz.find().select('-questions');
 
     return res.status(200).json(quizes);
-    
   } catch (error) {
     return res.status(400).json(error);
   }
-}
+};
 
 export const getQuizById = async (
   req: Request<{ id: string }>,
@@ -30,7 +26,6 @@ export const getQuizById = async (
     const quiz = await Quiz.findById(id);
 
     if (quiz) {
-
       const ques = quiz.questions.map((question) => {
         return { question: question.question, answers: question.answers, correct_answer: '?' };
       });
@@ -93,12 +88,10 @@ interface IQuest {
   incorrect_answers: string[];
 }
 
-
 // helper function used to transform quizes from https://opentdb.com/api_config.php  to our desired format
-// https://opentdb.com/api.php?amount=20&category=21&difficulty=easy&type=multiple 
+// https://opentdb.com/api.php?amount=20&category=21&difficulty=easy&type=multiple
 // this means category  sport and difficulty  easy
 const transformQuiz = (questions: IQuest[]): IQuiz => {
-
   let questionsResult = questions.map((q) => {
     let answers = [q.correct_answer, ...q.incorrect_answers];
 
@@ -115,7 +108,6 @@ const transformQuiz = (questions: IQuest[]): IQuiz => {
     difficulty: questions[0].difficulty,
     title: `${questions[0].category} ${questions[0].difficulty} TITLE !!!! ${Date.now()}`,
     type: questions[0].type,
-    questions: questionsResult
-  }
-
+    questions: questionsResult,
+  };
 };

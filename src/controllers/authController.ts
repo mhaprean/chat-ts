@@ -5,7 +5,7 @@ import { Request, Response, NextFunction } from 'express';
 
 const signJWTToken = (userId: string, role = 'user') => {
   return jwt.sign({ id: userId, role: role }, process.env.JWT_SECRET || 'jwt_secret', {
-    expiresIn: '1d',
+    expiresIn: '90d',
   });
 };
 
@@ -14,7 +14,7 @@ const signJWTRefreshToken = (userId: string, role = 'user') => {
     { id: userId, role: role },
     process.env.JWT_REFRESH_SECRET || 'jwt_refresh_secret',
     {
-      expiresIn: '2d',
+      expiresIn: '90d',
     }
   );
 };
@@ -25,8 +25,22 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
     const hash = bcrypt.hashSync(req.body.password, salt);
     const newUser = new User({ ...req.body, password: hash });
 
-    await newUser.save();
-    return res.status(200).json({ success: 'User has been created!', user: newUser });
+    const user = await newUser.save();
+
+    if (user && user._doc) {
+      const { password, ...rest } = user._doc;
+
+      const token = signJWTToken(user.id, user.role);
+
+      const refreshToken = signJWTRefreshToken(user.id, user.role);
+
+      return res
+        .cookie('jwt_refresh_token', refreshToken, {
+          httpOnly: true,
+        })
+        .status(201)
+        .json({ success: 'User has been created!', access_token: token, user: rest });
+    }
   } catch (err) {
     return res.status(400).json({ err });
   }
@@ -45,12 +59,14 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
 
     const refreshToken = signJWTRefreshToken(user.id, user.role);
 
+    const { password, ...rest } = user;
+
     return res
       .cookie('jwt_refresh_token', refreshToken, {
         httpOnly: true,
       })
       .status(200)
-      .json({ access_token: token });
+      .json({ access_token: token, user: rest });
   } catch (err) {
     next(err);
   }
@@ -61,7 +77,7 @@ export const profile = async (req: Request, res: Response, next: NextFunction) =
     const id = req.userId;
     const user = await User.findById(id).select({ password: 0 });
 
-    return res.status(200).json({ profile: user });
+    return res.status(200).json(user);
   } catch (error) {
     next(error);
   }
@@ -84,12 +100,15 @@ export const refreshToken = async (req: Request, res: Response, next: NextFuncti
 
         // const refreshToken = signJWTRefreshToken(user.id, user.role);
 
-        return res.clearCookie('jwt_refresh_token', { httpOnly: true })
-          // .cookie('jwt_refresh_token', refreshToken, {
-          //   httpOnly: true,
-          // })
-          .status(200)
-          .json({ access_token: token });
+        return (
+          res
+            .clearCookie('jwt_refresh_token', { httpOnly: true })
+            // .cookie('jwt_refresh_token', refreshToken, {
+            //   httpOnly: true,
+            // })
+            .status(200)
+            .json({ access_token: token })
+        );
       }
     }
   });
