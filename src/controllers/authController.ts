@@ -59,14 +59,16 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
 
     const refreshToken = signJWTRefreshToken(user.id, user.role);
 
-    const { password, ...rest } = user;
+    if (user && user._doc) {
+      const { password, ...rest } = user._doc;
 
-    return res
-      .cookie('jwt_refresh_token', refreshToken, {
-        httpOnly: true,
-      })
-      .status(200)
-      .json({ access_token: token, user: rest });
+      return res
+        .cookie('jwt_refresh_token', refreshToken, {
+          httpOnly: true,
+        })
+        .status(200)
+        .json({ access_token: token, user: rest });
+    }
   } catch (err) {
     next(err);
   }
