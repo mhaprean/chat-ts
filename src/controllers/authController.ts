@@ -39,7 +39,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
           httpOnly: true,
         })
         .status(201)
-        .json({ success: 'User has been created!', access_token: token, user: rest });
+        .json({ message: 'User has been created!', access_token: token, user: rest });
     }
   } catch (err) {
     return res.status(400).json({ err });
@@ -49,11 +49,11 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
 export const login = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = await User.findOne({ name: req.body.name });
-    if (!user) return res.status(404).json('User not found!');
+    if (!user) return res.status(400).json({ message: 'Wrong Username or Password' });
 
     const isCorrect = await bcrypt.compare(req.body.password, user.password);
 
-    if (!isCorrect) return res.status(400).json('Wrong Credentials!');
+    if (!isCorrect) return res.status(400).json({ message: 'Wrong Credentials!' });
 
     const token = signJWTToken(user.id, user.role);
 
@@ -67,7 +67,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
           httpOnly: true,
         })
         .status(200)
-        .json({ access_token: token, user: rest });
+        .json({ message: 'Welcome back!', access_token: token, user: rest });
     }
   } catch (err) {
     next(err);
