@@ -9,6 +9,7 @@ import authRoutes from './routes/authRoutes';
 
 import { isAuth } from './middleware/authMiddleware';
 import quizRoutes from './routes/quizRoutes';
+import userRoutes from './routes/userRoutes';
 
 const app = express();
 dotenv.config();
@@ -27,6 +28,9 @@ app.use(cors());
 app.use('/api/auth', authRoutes);
 
 app.use('/api/quiz', quizRoutes);
+
+
+app.use('/api/users', userRoutes);
 
 app.get('/', (req, res) => {
   return res.send('welcome to our chat rest api.');
