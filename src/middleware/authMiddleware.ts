@@ -38,3 +38,11 @@ export const isAdmin = (req: Request, res: Response, next: NextFunction) => {
     return res.status(401).json('You are not authenticated!');
   }
 };
+
+export const isHost = (req: Request, res: Response, next: NextFunction) => {
+  if (req.userRole === 'host') {
+    next();
+  } else {
+    return res.status(401).json('You are not allowed! make sure you have the correct role.');
+  }
+};

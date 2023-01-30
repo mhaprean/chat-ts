@@ -10,6 +10,7 @@ import authRoutes from './routes/authRoutes';
 import { isAuth } from './middleware/authMiddleware';
 import quizRoutes from './routes/quizRoutes';
 import userRoutes from './routes/userRoutes';
+import gameRoutes from './routes/gameRoutes';
 
 const app = express();
 dotenv.config();
@@ -29,6 +30,7 @@ app.use('/api/auth', authRoutes);
 
 app.use('/api/quiz', quizRoutes);
 
+app.use('/api/games', gameRoutes);
 
 app.use('/api/users', userRoutes);
 

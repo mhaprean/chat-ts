@@ -8,6 +8,12 @@ interface DocumentResult<T> {
 export interface IGame extends DocumentResult<IGame> {
   title: string;
   active: boolean;
+  password: string;
+  host: IUser[];
+  difficulty: string;
+  category: string;
+  type: string;
+  quiz_id: string;
   participats: IUser[];
   createdAt?: Date;
   updatedAt?: Date;
@@ -19,6 +25,7 @@ const GameSchema = new mongoose.Schema(
   {
     title: {
       type: String,
+      required: true,
     },
     active: {
       type: Boolean,
@@ -38,12 +45,19 @@ const GameSchema = new mongoose.Schema(
     difficulty: {
       type: String,
     },
-
     type: {
       type: String,
     },
     category: {
       type: String,
+    },
+    password: {
+      type: String,
+      required: true,
+    },
+    quiz: {
+      type: mongoose.Types.ObjectId,
+      ref: 'Quiz',
     },
   },
   { timestamps: true }
