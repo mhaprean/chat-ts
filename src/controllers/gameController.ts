@@ -2,6 +2,20 @@ import { Request, Response, NextFunction } from 'express';
 import Game, { IGame } from '../models/Game';
 import Joi from 'joi';
 
+export const getAllGames = async (
+  req: Request<{ id: string }>,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const games = await Game.find({ active: true }).select('-password').populate('host');
+
+    return res.status(200).json(games);
+  } catch (error) {
+    return res.status(400).json(error);
+  }
+};
+
 export const createGame = async (
   req: Request<{}, {}, IGame>,
   res: Response,
@@ -27,6 +41,27 @@ export const createGame = async (
     const game = await Game.create(newGame);
 
     return res.status(201).json(game);
+  } catch (error) {
+    return res.status(400).json(error);
+  }
+};
+
+export const getCurrentGame = async (
+  req: Request<{ id: string }>,
+  res: Response,
+  next: NextFunction
+) => {
+  // game id
+  const id = req.params.id;
+
+  const userId = req.userId;
+  const userRole = req.userRole;
+
+  try {
+    const game = await Game.findById(id).populate(['quiz', 'host']);
+
+    // ({ active: true }).select('-password').populate('host');
+    return res.status(200).json(game);
   } catch (error) {
     return res.status(400).json(error);
   }
