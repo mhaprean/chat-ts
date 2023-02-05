@@ -25,6 +25,10 @@ interface IStartGame {
   question: IQuestion;
 }
 
+interface IEndGame {
+  gameId: string;
+}
+
 interface IAddAnswer {
   gameId: string;
   userId: string;
@@ -95,7 +99,7 @@ const addAnswer = ({ gameId, userId, answerValue }: IAddAnswer) => {
     games[gameId].users[userId].points + (answerValue === games[gameId].expectedAnswer ? 1 : 0);
 };
 
-const deleteGame = ({ gameId }: IStartGame) => {
+const deleteGame = ({ gameId }: IEndGame) => {
   delete games[gameId];
 };
 

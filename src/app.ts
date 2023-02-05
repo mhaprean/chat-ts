@@ -85,6 +85,10 @@ interface IStartGamePayload {
 
 interface INextQuestionPayload extends IStartGamePayload {}
 
+interface IGetGameResultsPayload {
+  gameId: string;
+}
+
 io.on('connection', (socket) => {
   console.log(`User Connected: ${socket.id}`);
 
@@ -104,9 +108,9 @@ io.on('connection', (socket) => {
 
     const users = gameLogic.getGameUsers(data.gameId);
 
-    console.log('users: ', users);
+    const countUsers = Object.values(users).length;
 
-    socket.to(socket.id).emit('USER_JOINED', { data, users });
+    socket.broadcast.to(data.gameId).emit('USER_JOINED', { countUsers });
 
     try {
       const gameDB = await Game.findById(data.gameId);
@@ -126,7 +130,7 @@ io.on('connection', (socket) => {
     console.log('SUBMIT_ANSWER. users: ', users);
   });
 
-  socket.on('GET_RESULTS', async (data) => {
+  socket.on('GET_RESULTS', async (data: IGetGameResultsPayload) => {
     const users = gameLogic.getGameUsers(data.gameId);
 
     console.log('results: ', users);
@@ -146,9 +150,9 @@ io.on('connection', (socket) => {
           });
         const updateResults = await gameDB.updateOne({ results: results, active: false });
 
-        gameLogic.deleteGame(data.gameId);
+        gameLogic.deleteGame({ gameId: data.gameId });
 
-        socket.broadcast.to(data.gameId).emit('QUIZ_ENDED', {results});
+        socket.broadcast.to(data.gameId).emit('QUIZ_ENDED', { results });
       }
     } catch (error) {
       console.log('error getting game results.');
@@ -164,8 +168,6 @@ io.on('connection', (socket) => {
     });
 
     const users = gameLogic.getGameUsers(data.gameId);
-
-    console.log('game_started. users: ', users);
 
     socket.broadcast.to(data.gameId).emit('QUIZ_STARTED', data);
   });
