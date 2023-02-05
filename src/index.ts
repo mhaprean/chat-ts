@@ -1,4 +1,4 @@
-import app from './app';
+import server from './app';
 import mongoose from 'mongoose';
 
 const start = async () => {
@@ -10,7 +10,8 @@ const start = async () => {
   try {
     await mongoose.connect(process.env.DATABASE_URL);
     const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
+
+    server.listen(PORT, () => {
       console.log('App started on port: '+ PORT)
     });
   } catch (error) {

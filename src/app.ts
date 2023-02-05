@@ -12,6 +12,11 @@ import quizRoutes from './routes/quizRoutes';
 import userRoutes from './routes/userRoutes';
 import gameRoutes from './routes/gameRoutes';
 
+import http from 'http';
+import { Server } from 'socket.io';
+import Game from './models/Game';
+import gameLogic from './gameLogic';
+
 const app = express();
 dotenv.config();
 
@@ -39,8 +44,118 @@ app.get('/', (req, res) => {
 });
 
 app.get('/protected', isAuth, (req, res) => {
+  return res.status(200).json({ sucess: 'this is a protected route' });
+});
 
-  return res.status(200).json({sucess: 'this is a protected route'});
-})
+const server = http.createServer(app);
 
-export default app;
+const io = new Server(server, {
+  cors: {
+    origin: 'http://127.0.0.1:5173',
+    methods: ['GET', 'POST', 'PUT'],
+  },
+});
+
+interface ISubmitAnswerPayload {
+  gameId: string;
+  userId: string;
+  questionIdx: number;
+  answer: string;
+}
+
+export interface IQuestion {
+  question: string;
+  answers: string[];
+  correct_answer: string;
+  _id: string;
+}
+
+
+
+interface IJoinRoomPayload {
+  gameId: string;
+  username: string;
+  userId: string;
+}
+
+interface IStartGamePayload {
+  gameId: string;
+  userId: string;
+  question: IQuestion;
+  questionIdx: number;
+}
+
+interface INextQuestionPayload extends IStartGamePayload {}
+
+io.on('connection', (socket) => {
+  console.log(`User Connected: ${socket.id}`);
+
+  socket.on('join_room', async (data: IJoinRoomPayload) => {
+    socket.join(data.gameId);
+    console.log(
+      `User with ID: ${socket.id} joined room: ${data.gameId}. user db is: ${data.userId}`
+    );
+
+    gameLogic.createGame({
+      gameId: data.gameId,
+      userId: data.userId,
+      username: data.username,
+      currentQuestion: null,
+    });
+    gameLogic.joinGame({ gameId: data.gameId, userId: data.userId, username: data.username });
+
+    const users = gameLogic.getGameUsers(data.gameId);
+
+    console.log('users: ', users);
+  });
+
+  socket.on('SUBMIT_ANSWER', (data: ISubmitAnswerPayload) => {
+
+    gameLogic.addAnswer({ gameId: data.gameId, userId: data.userId, answerValue: data.answer });
+
+    const users = gameLogic.getGameUsers(data.gameId);
+    console.log('SUBMIT_ANSWER. users: ', users);
+  });
+
+  socket.on('GET_RESULTS', (data) => {
+    
+    const results = gameLogic.getGameUsers(data.gameId);
+
+    console.log('results: ', results);
+  });
+
+  socket.on('game_started', (data: IStartGamePayload) => {
+    console.log('game started', data);
+    gameLogic.startGame({
+      gameId: data.gameId,
+      expectedAnswer: data.question.correct_answer,
+      question: data.question,
+    });
+
+    const users = gameLogic.getGameUsers(data.gameId);
+
+    console.log('game_started. users: ', users);
+
+    socket.broadcast.to(data.gameId).emit('QUIZ_STARTED', data);
+  });
+
+  socket.on('next_question', (data: INextQuestionPayload) => {
+    gameLogic.onNextQuestion({
+      gameId: data.gameId,
+      expectedAnswer: data.question.correct_answer,
+      question: data.question
+    });
+
+    socket.broadcast.to(data.gameId).emit('NEXT_QUESTION', data);
+  });
+
+  socket.on('ROOM_CREATED', () => {
+    socket.broadcast.emit('SHOULD_REFETCH_ROOMS');
+  });
+
+  socket.on('disconnect', () => {
+    console.log('User Disconnected', socket.id);
+  });
+});
+
+export default server;
