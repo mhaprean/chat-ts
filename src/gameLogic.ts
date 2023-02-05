@@ -46,6 +46,12 @@ interface ICreateGame {
 
 const games: IGames = {};
 
+const getCurrentGame = (gameId: string) => {
+  if (games[gameId]) {
+    return games[gameId];
+  }
+};
+
 const joinGame = ({ userId, gameId, username }: IJoinGame) => {
   if (!games[gameId].users[userId]) {
     games[gameId].users[userId] = {
@@ -105,6 +111,7 @@ const gameModule = {
   addAnswer,
   getGameUsers,
   deleteGame,
+  getCurrentGame,
 };
 
 export default gameModule;

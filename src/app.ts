@@ -70,8 +70,6 @@ export interface IQuestion {
   _id: string;
 }
 
-
-
 interface IJoinRoomPayload {
   gameId: string;
   username: string;
@@ -107,21 +105,54 @@ io.on('connection', (socket) => {
     const users = gameLogic.getGameUsers(data.gameId);
 
     console.log('users: ', users);
+
+    socket.to(socket.id).emit('USER_JOINED', { data, users });
+
+    try {
+      const gameDB = await Game.findById(data.gameId);
+
+      if (gameDB && !gameDB.participats.includes(data.userId)) {
+        const addUser = await gameDB.updateOne({ $push: { participats: data.userId } });
+      }
+    } catch (error) {
+      console.log('error adding user to game (in db)');
+    }
   });
 
   socket.on('SUBMIT_ANSWER', (data: ISubmitAnswerPayload) => {
-
     gameLogic.addAnswer({ gameId: data.gameId, userId: data.userId, answerValue: data.answer });
 
     const users = gameLogic.getGameUsers(data.gameId);
     console.log('SUBMIT_ANSWER. users: ', users);
   });
 
-  socket.on('GET_RESULTS', (data) => {
-    
-    const results = gameLogic.getGameUsers(data.gameId);
+  socket.on('GET_RESULTS', async (data) => {
+    const users = gameLogic.getGameUsers(data.gameId);
 
-    console.log('results: ', results);
+    console.log('results: ', users);
+
+    try {
+      const gameDB = await Game.findById(data.gameId);
+
+      if (gameDB) {
+        const results = Object.values(users)
+          .filter((user) => user.id !== gameDB.host)
+          .sort((a, b) => b.points - a.points)
+          .map((user) => {
+            return {
+              username: user.name,
+              points: user.points,
+            };
+          });
+        const updateResults = await gameDB.updateOne({ results: results, active: false });
+
+        gameLogic.deleteGame(data.gameId);
+
+        socket.broadcast.to(data.gameId).emit('QUIZ_ENDED', {results});
+      }
+    } catch (error) {
+      console.log('error getting game results.');
+    }
   });
 
   socket.on('game_started', (data: IStartGamePayload) => {
@@ -143,7 +174,7 @@ io.on('connection', (socket) => {
     gameLogic.onNextQuestion({
       gameId: data.gameId,
       expectedAnswer: data.question.correct_answer,
-      question: data.question
+      question: data.question,
     });
 
     socket.broadcast.to(data.gameId).emit('NEXT_QUESTION', data);

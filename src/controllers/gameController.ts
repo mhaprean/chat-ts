@@ -8,7 +8,7 @@ export const getAllGames = async (
   next: NextFunction
 ) => {
   try {
-    const games = await Game.find({ active: true }).select('-password').populate('host');
+    const games = await Game.find({ active: true }).select('-password');
 
     return res.status(200).json(games);
   } catch (error) {
