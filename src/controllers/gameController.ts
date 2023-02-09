@@ -27,7 +27,7 @@ export const createGame = async (
     const joiSchema = Joi.object({
       title: Joi.string().min(3).max(60).required(),
       password: Joi.string().min(6).max(6).required(),
-      quiz_id: Joi.string().hex().length(24),
+      quiz_id: Joi.string(),
     });
 
     const { error } = joiSchema.validate(req.body);
@@ -37,7 +37,14 @@ export const createGame = async (
     }
 
     const { title, password, quiz_id } = req.body;
-    const newGame = { title, password, active: true, quiz: quiz_id, host: userId };
+    const newGame = {
+      title,
+      password: password,
+      active: true,
+      quiz: quiz_id,
+      host: userId,
+    };
+
     const game = await Game.create(newGame);
 
     return res.status(201).json(game);
@@ -62,6 +69,30 @@ export const getCurrentGame = async (
 
     // ({ active: true }).select('-password').populate('host');
     return res.status(200).json(game);
+  } catch (error) {
+    return res.status(400).json(error);
+  }
+};
+
+export const joinGame = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+  // game id
+  const id = req.params.id;
+
+  const userId = req.userId;
+  const userRole = req.userRole;
+
+  const { password } = req.body;
+
+  try {
+    const game = await Game.findById(id);
+
+    if (game && userId && !game.participats.includes(userId) && password === game.password) {
+      game.participats.push(userId);
+      const result = await game.save();
+
+      return res.status(200).json(game);
+    }
+    return res.status(200).json({ message: 'user already in the roon', game });
   } catch (error) {
     return res.status(400).json(error);
   }
