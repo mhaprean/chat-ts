@@ -55,6 +55,7 @@ const io = new Server(server, {
     methods: ['GET', 'POST', 'PUT'],
     credentials: true,
   },
+  pingTimeout: 160000,
 });
 
 interface ISubmitAnswerPayload {
@@ -125,16 +126,12 @@ io.on('connection', (socket) => {
   });
 
   socket.on('leave_room', async (data: IJoinRoomPayload) => {
-
     const users = gameLogic.getGameUsers(data.gameId);
 
     const countUsers = Object.values(users).length;
 
     socket.broadcast.to(data.gameId).emit('USER_LEFT', { countUsers });
-
   });
-
-
 
   socket.on('SUBMIT_ANSWER', (data: ISubmitAnswerPayload) => {
     gameLogic.addAnswer({ gameId: data.gameId, userId: data.userId, answerValue: data.answer });
@@ -199,9 +196,12 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('SHOULD_REFETCH_ROOMS');
   });
 
-  socket.on('disconnect', () => {
+
+  socket.on("disconnect", (reason) => {
     console.log('User Disconnected', socket.id);
+    console.log('reason of disconnect: ', reason); // "ping timeout"
   });
+
 });
 
 export default server;
