@@ -124,6 +124,18 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('leave_room', async (data: IJoinRoomPayload) => {
+
+    const users = gameLogic.getGameUsers(data.gameId);
+
+    const countUsers = Object.values(users).length;
+
+    socket.broadcast.to(data.gameId).emit('USER_LEFT', { countUsers });
+
+  });
+
+
+
   socket.on('SUBMIT_ANSWER', (data: ISubmitAnswerPayload) => {
     gameLogic.addAnswer({ gameId: data.gameId, userId: data.userId, answerValue: data.answer });
 

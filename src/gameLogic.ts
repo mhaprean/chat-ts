@@ -10,6 +10,7 @@ interface IGame {
   expectedAnswer: string;
   started: boolean;
   currentQuestion: IQuestion | null;
+  onlineUsers: IUser[];
   users: {
     [key: string]: IUser;
   };
@@ -73,6 +74,7 @@ const createGame = ({ userId, gameId, username }: ICreateGame) => {
       expectedAnswer: '',
       started: false,
       currentQuestion: null,
+      onlineUsers: [],
     };
   }
 
@@ -104,7 +106,10 @@ const deleteGame = ({ gameId }: IEndGame) => {
 };
 
 const getGameUsers = (gameId: string) => {
-  return games[gameId].users;
+  if (games[gameId] && games[gameId].users) {
+    return games[gameId].users;
+  }
+  return {};
 };
 
 const gameModule = {
