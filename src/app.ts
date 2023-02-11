@@ -107,6 +107,7 @@ io.on('connection', (socket) => {
       username: data.username,
       currentQuestion: null,
       questionIdx: 0,
+      isHost: data.isHost,
     });
 
     gameLogic.joinGame({
@@ -116,29 +117,15 @@ io.on('connection', (socket) => {
       isHost: data.isHost,
     });
 
-    const users = gameLogic.getGameUsers(data.gameId);
-
-    const countUsers = Object.values(users).length;
-
     const game = gameLogic.getCurrentGame(data.gameId);
 
-    socket.broadcast.to(data.gameId).emit('USER_JOINED', { countUsers, game });
+    socket.broadcast.to(data.gameId).emit('USER_JOINED', { game });
 
     // Send message to the user who just joined
     socket.emit('WELCOME_BACK', {
       message: `Welcome to room ${data.gameId}`,
       game: { ...game, expectedAnswer: '?' },
     });
-
-    try {
-      const gameDB = await Game.findById(data.gameId);
-
-      if (gameDB && !gameDB.participats.includes(data.userId)) {
-        const addUser = await gameDB.updateOne({ $push: { participats: data.userId } });
-      }
-    } catch (error) {
-      console.log('error adding user to game (in db)');
-    }
   });
 
   socket.on('leave_room', async (data: IJoinRoomPayload) => {
@@ -150,16 +137,11 @@ io.on('connection', (socket) => {
     });
     const users = gameLogic.getGameOnlineUsers(data.gameId);
 
-    const countUsers = Object.values(users).length;
-
-    socket.broadcast.to(data.gameId).emit('USER_LEFT', { countUsers });
+    socket.broadcast.to(data.gameId).emit('USER_LEFT', { countUsers: users.length });
   });
 
   socket.on('SUBMIT_ANSWER', (data: ISubmitAnswerPayload) => {
     gameLogic.addAnswer({ gameId: data.gameId, userId: data.userId, answerValue: data.answer });
-
-    const users = gameLogic.getGameUsers(data.gameId);
-    console.log('SUBMIT_ANSWER. users: ', users);
   });
 
   socket.on('GET_RESULTS', async (data: IGetGameResultsPayload) => {
@@ -199,8 +181,6 @@ io.on('connection', (socket) => {
       question: data.question,
       questionIdx: data.questionIdx,
     });
-
-    const users = gameLogic.getGameUsers(data.gameId);
 
     socket.broadcast.to(data.gameId).emit('QUIZ_STARTED', data);
   });

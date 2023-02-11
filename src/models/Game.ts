@@ -14,7 +14,7 @@ export interface IGame extends DocumentResult<IGame> {
   category: string;
   type: string;
   quiz_id: string;
-  participats: string[];
+  participants: string[];
   results: {
     username: string;
     points: number;
@@ -35,7 +35,7 @@ const GameSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    participats: [
+    participants: [
       {
         type: mongoose.Types.ObjectId,
         ref: 'User',

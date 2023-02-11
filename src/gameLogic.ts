@@ -6,11 +6,12 @@ interface IRoomUser {
   points: number;
 }
 
-interface IGame {
+interface IRoomGame {
   expectedAnswer: string;
   started: boolean;
   currentQuestion: IQuestion | null;
   questionIdx: number;
+  questionAnsweredBy: string[];
   onlineUsers: string[];
   users: {
     [key: string]: IRoomUser;
@@ -18,7 +19,7 @@ interface IGame {
 }
 
 interface IGames {
-  [key: string]: IGame;
+  [key: string]: IRoomGame;
 }
 
 interface IStartGame {
@@ -49,6 +50,7 @@ interface ICreateGame {
   userId: string;
   username: string;
   gameId: string;
+  isHost: boolean;
   currentQuestion: IQuestion | null;
   questionIdx: number;
 }
@@ -59,9 +61,10 @@ const getCurrentGame = (gameId: string) => {
   if (games[gameId]) {
     return games[gameId];
   }
+  return null;
 };
 
-const joinGame = ({ userId, gameId, username }: IJoinGame) => {
+const joinGame = ({ userId, gameId, username, isHost }: IJoinGame) => {
   if (!games[gameId].users[userId]) {
     games[gameId].users[userId] = {
       id: userId,
@@ -81,18 +84,18 @@ const leaveGame = ({ userId, gameId, username }: IJoinGame) => {
   }
 };
 
-const createGame = ({ userId, gameId, username }: ICreateGame) => {
+const createGame = ({ userId, gameId, username, isHost }: ICreateGame) => {
   if (!games[gameId]) {
     games[gameId] = {
       users: {},
       expectedAnswer: '',
       started: false,
       currentQuestion: null,
+      questionAnsweredBy: [],
       onlineUsers: [],
       questionIdx: 0,
     };
   }
-  const isHost = false;
   joinGame({ userId, gameId, username, isHost });
 };
 
@@ -101,6 +104,7 @@ const startGame = ({ gameId, expectedAnswer, question }: IStartGame) => {
     games[gameId].expectedAnswer = expectedAnswer;
     games[gameId].currentQuestion = question;
     games[gameId].started = true;
+    games[gameId].questionAnsweredBy = [];
   }
 };
 
@@ -108,12 +112,16 @@ const onNextQuestion = ({ gameId, expectedAnswer, question }: IStartGame) => {
   if (games[gameId]) {
     games[gameId].expectedAnswer = expectedAnswer;
     games[gameId].currentQuestion = question;
+    games[gameId].questionAnsweredBy = [];
+    games[gameId].questionIdx = games[gameId].questionIdx + 1;
   }
 };
 
 const addAnswer = ({ gameId, userId, answerValue }: IAddAnswer) => {
   games[gameId].users[userId].points =
     games[gameId].users[userId].points + (answerValue === games[gameId].expectedAnswer ? 1 : 0);
+
+    games[gameId].questionAnsweredBy.push(userId);
 };
 
 const deleteGame = ({ gameId }: IEndGame) => {
@@ -131,7 +139,7 @@ const getGameOnlineUsers = (gameId: string) => {
   if (games[gameId] && games[gameId].onlineUsers) {
     return games[gameId].onlineUsers;
   }
-  return {};
+  return [];
 };
 
 const gameModule = {

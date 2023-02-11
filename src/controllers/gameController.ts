@@ -93,8 +93,8 @@ export const joinGame = async (req: Request<{ id: string }>, res: Response, next
   try {
     const game = await Game.findById(id);
 
-    if (game && userId && !game.participats.includes(userId) && password === game.password) {
-      game.participats.push(userId);
+    if (game && userId && !game.participants.includes(userId) && password === game.password) {
+      game.participants.push(userId);
       const result = await game.save();
 
       return res.status(200).json(game);
