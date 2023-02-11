@@ -62,13 +62,20 @@ export const getCurrentGame = async (
   const id = req.params.id;
 
   const userId = req.userId;
-  const userRole = req.userRole;
 
   try {
-    const game = await Game.findById(id).populate(['quiz', 'host']);
+    const game = await Game.findById(id);
 
-    // ({ active: true }).select('-password').populate('host');
-    return res.status(200).json(game);
+    if (!game) {
+      return res.status(400).json({ error: 'wrong game id' });
+    }
+    if (game.host.toString() === userId) {
+      const populatedGame = await Game.findById(id).populate(['quiz', 'host']);
+      return res.status(200).json(populatedGame);
+    } else {
+      const populatedGame = await Game.findById(id).populate(['host']);
+      return res.status(200).json(populatedGame);
+    }
   } catch (error) {
     return res.status(400).json(error);
   }

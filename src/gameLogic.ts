@@ -1,6 +1,6 @@
 import { IQuestion } from './app';
 
-interface IUser {
+interface IRoomUser {
   id: string;
   name: string;
   points: number;
@@ -10,9 +10,10 @@ interface IGame {
   expectedAnswer: string;
   started: boolean;
   currentQuestion: IQuestion | null;
-  onlineUsers: IUser[];
+  questionIdx: number;
+  onlineUsers: string[];
   users: {
-    [key: string]: IUser;
+    [key: string]: IRoomUser;
   };
 }
 
@@ -24,6 +25,7 @@ interface IStartGame {
   gameId: string;
   expectedAnswer: string;
   question: IQuestion;
+  questionIdx: number;
 }
 
 interface IEndGame {
@@ -40,6 +42,7 @@ interface IJoinGame {
   userId: string;
   username: string;
   gameId: string;
+  isHost: boolean;
 }
 
 interface ICreateGame {
@@ -47,6 +50,7 @@ interface ICreateGame {
   username: string;
   gameId: string;
   currentQuestion: IQuestion | null;
+  questionIdx: number;
 }
 
 const games: IGames = {};
@@ -65,6 +69,16 @@ const joinGame = ({ userId, gameId, username }: IJoinGame) => {
       points: 0,
     };
   }
+
+  if (games[gameId] && !games[gameId].onlineUsers.includes(userId)) {
+    games[gameId].onlineUsers = [...games[gameId].onlineUsers, userId];
+  }
+};
+
+const leaveGame = ({ userId, gameId, username }: IJoinGame) => {
+  if (games[gameId] && games[gameId].onlineUsers.includes(userId)) {
+    games[gameId].onlineUsers = games[gameId].onlineUsers.filter((user, idx) => user !== userId);
+  }
 };
 
 const createGame = ({ userId, gameId, username }: ICreateGame) => {
@@ -75,10 +89,11 @@ const createGame = ({ userId, gameId, username }: ICreateGame) => {
       started: false,
       currentQuestion: null,
       onlineUsers: [],
+      questionIdx: 0,
     };
   }
-
-  joinGame({ userId, gameId, username });
+  const isHost = false;
+  joinGame({ userId, gameId, username, isHost });
 };
 
 const startGame = ({ gameId, expectedAnswer, question }: IStartGame) => {
@@ -112,15 +127,24 @@ const getGameUsers = (gameId: string) => {
   return {};
 };
 
+const getGameOnlineUsers = (gameId: string) => {
+  if (games[gameId] && games[gameId].onlineUsers) {
+    return games[gameId].onlineUsers;
+  }
+  return {};
+};
+
 const gameModule = {
   createGame,
   joinGame,
+  leaveGame,
   startGame,
   onNextQuestion,
   addAnswer,
   getGameUsers,
   deleteGame,
   getCurrentGame,
+  getGameOnlineUsers,
 };
 
 export default gameModule;

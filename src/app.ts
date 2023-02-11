@@ -76,6 +76,7 @@ interface IJoinRoomPayload {
   gameId: string;
   username: string;
   userId: string;
+  isHost: boolean;
 }
 
 interface IStartGamePayload {
@@ -105,14 +106,29 @@ io.on('connection', (socket) => {
       userId: data.userId,
       username: data.username,
       currentQuestion: null,
+      questionIdx: 0,
     });
-    gameLogic.joinGame({ gameId: data.gameId, userId: data.userId, username: data.username });
+
+    gameLogic.joinGame({
+      gameId: data.gameId,
+      userId: data.userId,
+      username: data.username,
+      isHost: data.isHost,
+    });
 
     const users = gameLogic.getGameUsers(data.gameId);
 
     const countUsers = Object.values(users).length;
 
-    socket.broadcast.to(data.gameId).emit('USER_JOINED', { countUsers });
+    const game = gameLogic.getCurrentGame(data.gameId);
+
+    socket.broadcast.to(data.gameId).emit('USER_JOINED', { countUsers, game });
+
+    // Send message to the user who just joined
+    socket.emit('WELCOME_BACK', {
+      message: `Welcome to room ${data.gameId}`,
+      game: { ...game, expectedAnswer: '?' },
+    });
 
     try {
       const gameDB = await Game.findById(data.gameId);
@@ -126,7 +142,13 @@ io.on('connection', (socket) => {
   });
 
   socket.on('leave_room', async (data: IJoinRoomPayload) => {
-    const users = gameLogic.getGameUsers(data.gameId);
+    gameLogic.leaveGame({
+      gameId: data.gameId,
+      userId: data.userId,
+      username: data.username,
+      isHost: data.isHost,
+    });
+    const users = gameLogic.getGameOnlineUsers(data.gameId);
 
     const countUsers = Object.values(users).length;
 
@@ -175,6 +197,7 @@ io.on('connection', (socket) => {
       gameId: data.gameId,
       expectedAnswer: data.question.correct_answer,
       question: data.question,
+      questionIdx: data.questionIdx,
     });
 
     const users = gameLogic.getGameUsers(data.gameId);
@@ -187,6 +210,7 @@ io.on('connection', (socket) => {
       gameId: data.gameId,
       expectedAnswer: data.question.correct_answer,
       question: data.question,
+      questionIdx: data.questionIdx,
     });
 
     socket.broadcast.to(data.gameId).emit('NEXT_QUESTION', data);
@@ -196,12 +220,10 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('SHOULD_REFETCH_ROOMS');
   });
 
-
-  socket.on("disconnect", (reason) => {
+  socket.on('disconnect', (reason) => {
     console.log('User Disconnected', socket.id);
     console.log('reason of disconnect: ', reason); // "ping timeout"
   });
-
 });
 
 export default server;
