@@ -11,6 +11,6 @@ router.get('/:id', getQuizById);
 router.get('/', getAllQuizes);
 
 // add quzi
-router.post('/', isAuth, createQuiz);
+router.post('/create', isAuth, createQuiz);
 
 export default router;

@@ -4,16 +4,20 @@ interface DocumentResult<T> {
   _doc?: T;
 }
 
+export interface IQuizQuestion {
+  question: string;
+  answers: string[];
+  correct_answer: string;
+}
+
 export interface IQuiz extends DocumentResult<IQuiz> {
   title: string;
-  questions: {
-    question: string;
-    answers: string[];
-    correct_answer: string;
-  }[];
+  questions: IQuizQuestion[];
   difficulty: string;
   category: string;
   type: string;
+  total: number;
+  creator: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -29,8 +33,6 @@ const QuizSchema = new mongoose.Schema(
       {
         question: {
           type: String,
-          required: true,
-          unique: true,
         },
         answers: [
           {
@@ -39,19 +41,25 @@ const QuizSchema = new mongoose.Schema(
         ],
         correct_answer: {
           type: String,
-          required: true,
         },
       },
     ],
+    creator: {
+      type: mongoose.Types.ObjectId,
+      ref: 'User',
+    },
     difficulty: {
       type: String,
     },
-
     type: {
       type: String,
     },
     category: {
       type: String,
+    },
+    total: {
+      type: Number,
+      default: 0,
     },
   },
   { timestamps: true }

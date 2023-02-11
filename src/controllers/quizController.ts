@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import Quiz, { IQuiz } from '../models/Quiz';
+import Quiz, { IQuiz, IQuizQuestion } from '../models/Quiz';
 import Joi from 'joi';
 
 export const getAllQuizes = async (
@@ -47,8 +47,12 @@ export const createQuiz = async (
   try {
     const userId = req.userId;
 
+    if (!userId) {
+      return res.status(400).send({ message: 'You are not authenticated' });
+    }
+
     const joiSchema = Joi.object({
-      title: Joi.string().min(3).max(60).required(),
+      title: Joi.string().min(1).max(60).required(),
       category: Joi.string(),
       type: Joi.string(),
       difficulty: Joi.string(),
@@ -58,16 +62,17 @@ export const createQuiz = async (
     const { error } = joiSchema.validate(req.body);
 
     if (error) {
-      console.log('!!!!!!!! joiSchema error', error);
       return res.status(400).send(error);
     }
 
     const newQuiz: IQuiz = {
       title: req.body.title,
       category: req.body.category,
-      type: req.body.type,
+      type: req.body.type || '',
       difficulty: req.body.difficulty,
       questions: req.body.questions,
+      creator: userId,
+      total: req.body.questions.length,
     };
 
     const quiz = await Quiz.create(newQuiz);
@@ -75,7 +80,7 @@ export const createQuiz = async (
     return res.status(201).json(quiz);
   } catch (error) {
     console.log('!!!!!!!! error', error);
-    return res.status(400).json(error);
+    return res.status(400).json({ error: error });
   }
 };
 
@@ -87,27 +92,3 @@ interface IQuest {
   correct_answer: string;
   incorrect_answers: string[];
 }
-
-// helper function used to transform quizes from https://opentdb.com/api_config.php  to our desired format
-// https://opentdb.com/api.php?amount=20&category=21&difficulty=easy&type=multiple
-// this means category  sport and difficulty  easy
-const transformQuiz = (questions: IQuest[]): IQuiz => {
-  let questionsResult = questions.map((q) => {
-    let answers = [q.correct_answer, ...q.incorrect_answers];
-
-    let shuffled = answers
-      .map((value) => ({ value, sort: Math.random() }))
-      .sort((a, b) => a.sort - b.sort)
-      .map(({ value }) => value);
-
-    return { question: q.question, answers: shuffled, correct_answer: q.correct_answer };
-  });
-
-  return {
-    category: questions[0].category,
-    difficulty: questions[0].difficulty,
-    title: `${questions[0].category} ${questions[0].difficulty} TITLE !!!! ${Date.now()}`,
-    type: questions[0].type,
-    questions: questionsResult,
-  };
-};
