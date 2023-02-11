@@ -16,6 +16,24 @@ export const getAllGames = async (
   }
 };
 
+export const getMyGames = async (
+  req: Request<{ id: string }>,
+  res: Response,
+  next: NextFunction
+) => {
+  const userId = req.userId;
+
+  try {
+    const games = await Game.find({ participants: { $in: [userId] } })
+      .select('-password')
+      .populate(['host']);
+
+    return res.status(200).json(games);
+  } catch (error) {
+    return res.status(400).json(error);
+  }
+};
+
 export const createGame = async (
   req: Request<{}, {}, IGame>,
   res: Response,
