@@ -162,7 +162,11 @@ io.on('connection', (socket) => {
               points: user.points,
             };
           });
-        const updateResults = await gameDB.updateOne({ results: results, active: false });
+        const updateResults = await gameDB.updateOne({
+          results: results,
+          active: false,
+          ended: true,
+        });
 
         gameLogic.deleteGame({ gameId: data.gameId });
 

@@ -8,6 +8,7 @@ interface DocumentResult<T> {
 export interface IGame extends DocumentResult<IGame> {
   title: string;
   active: boolean;
+  ended: boolean;
   password: string;
   host: string;
   difficulty: string;
@@ -32,6 +33,10 @@ const GameSchema = new mongoose.Schema(
       required: true,
     },
     active: {
+      type: Boolean,
+      default: false,
+    },
+    ended: {
       type: Boolean,
       default: false,
     },
