@@ -8,7 +8,28 @@ export const getAllQuizes = async (
   next: NextFunction
 ) => {
   try {
-    const quizes = await Quiz.find().select('-questions');
+    const quizes = await Quiz.find({ public: true }).select('-questions');
+
+    return res.status(200).json(quizes);
+  } catch (error) {
+    return res.status(400).json(error);
+  }
+};
+
+export const getMyQuizes = async (
+  req: Request<{ id: string }>,
+  res: Response,
+  next: NextFunction
+) => {
+  console.log('get my quizesc ');
+  const userId = req.userId;
+
+  if (!userId) {
+    return res.status(400).send({ message: 'You are not authenticated' });
+  }
+
+  try {
+    const quizes = await Quiz.find({ creator: userId }).select('-questions');
 
     return res.status(200).json(quizes);
   } catch (error) {

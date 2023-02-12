@@ -1,14 +1,18 @@
 import express from 'express';
-import { createQuiz, getAllQuizes, getQuizById } from '../controllers/quizController';
+import { createQuiz, getAllQuizes, getQuizById, getMyQuizes } from '../controllers/quizController';
 
 import { isAuth } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
-// get single quiz
-router.get('/:id', getQuizById);
+router.get('/myquizes', [isAuth], getMyQuizes);
 
-router.get('/', getAllQuizes);
+// get single quiz
+// comment this route for now, as we don't need it.
+// router.get('/:id', getQuizById);
+
+// get all public quizes
+router.get('/all', getAllQuizes);
 
 // add quzi
 router.post('/create', isAuth, createQuiz);
