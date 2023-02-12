@@ -39,7 +39,9 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
     const salt = bcrypt.genSaltSync(10);
     const hash = bcrypt.hashSync(req.body.password, salt);
 
-    const confirmation_token = bcrypt.hashSync(hash.slice(0, 10), bcrypt.genSaltSync(5));
+    const confirmation_token = bcrypt
+      .hashSync(hash.slice(0, 10), bcrypt.genSaltSync(5))
+      .replace(/[^A-Za-z0-9]/g, '');
     const newUser = new User({ ...req.body, password: hash, confirmation_token });
 
     const user = await newUser.save();
