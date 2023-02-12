@@ -21,7 +21,6 @@ export const getMyQuizes = async (
   res: Response,
   next: NextFunction
 ) => {
-  console.log('get my quizesc ');
   const userId = req.userId;
 
   if (!userId) {
@@ -105,11 +104,3 @@ export const createQuiz = async (
   }
 };
 
-interface IQuest {
-  category: string;
-  type: string;
-  difficulty: string;
-  question: string;
-  correct_answer: string;
-  incorrect_answers: string[];
-}

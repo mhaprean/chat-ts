@@ -65,7 +65,7 @@ const getCurrentGame = (gameId: string) => {
 };
 
 const joinGame = ({ userId, gameId, username, isHost }: IJoinGame) => {
-  if (!games[gameId].users[userId]) {
+  if (games[gameId] && !games[gameId].users[userId]) {
     games[gameId].users[userId] = {
       id: userId,
       name: username,
@@ -121,7 +121,7 @@ const addAnswer = ({ gameId, userId, answerValue }: IAddAnswer) => {
   games[gameId].users[userId].points =
     games[gameId].users[userId].points + (answerValue === games[gameId].expectedAnswer ? 1 : 0);
 
-    games[gameId].questionAnsweredBy.push(userId);
+  games[gameId].questionAnsweredBy.push(userId);
 };
 
 const deleteGame = ({ gameId }: IEndGame) => {

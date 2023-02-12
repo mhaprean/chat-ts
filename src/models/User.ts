@@ -10,6 +10,7 @@ export interface IUser extends DocumentResult<IUser> {
   password: string;
   image?: string;
   role: string;
+  confirmation_token: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -38,6 +39,9 @@ const UserSchema = new mongoose.Schema(
       type: String,
       enum: ['user', 'host', 'admin'],
       default: 'user',
+    },
+    confirmation_token: {
+      type: String,
     },
   },
   { timestamps: true }

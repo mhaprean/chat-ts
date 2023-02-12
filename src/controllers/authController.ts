@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
 import Joi from 'joi';
+import { sendEmail } from '../helpers/mail.js';
 
 const signJWTToken = (userId: string, role = 'user') => {
   return jwt.sign({ id: userId, role: role }, process.env.JWT_SECRET || 'jwt_secret', {
@@ -24,7 +25,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
   try {
     const joiSchema = Joi.object({
       name: Joi.string().min(1).max(60).required(),
-      email: Joi.string().email(),
+      email: Joi.string().email().required(),
       password: Joi.string().min(4).required(),
       image: Joi.string(),
     });
@@ -37,7 +38,9 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
 
     const salt = bcrypt.genSaltSync(10);
     const hash = bcrypt.hashSync(req.body.password, salt);
-    const newUser = new User({ ...req.body, password: hash });
+
+    const confirmation_token = bcrypt.hashSync(hash.slice(0, 10), bcrypt.genSaltSync(5));
+    const newUser = new User({ ...req.body, password: hash, confirmation_token });
 
     const user = await newUser.save();
 
@@ -47,6 +50,8 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
       const token = signJWTToken(user.id, user.role);
 
       const refreshToken = signJWTRefreshToken(user.id, user.role);
+
+      sendEmail(req.body.email, user.id, confirmation_token);
 
       return res
         .cookie('jwt_refresh_token', refreshToken, {
@@ -96,6 +101,38 @@ export const profile = async (req: Request, res: Response, next: NextFunction) =
     return res.status(200).json(user);
   } catch (error) {
     next(error);
+  }
+};
+
+export const confirmAccount = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const joiSchema = Joi.object({
+      userId: Joi.string().required(),
+      token: Joi.string().required(),
+    });
+
+    const { error } = joiSchema.validate(req.body);
+
+    if (error) {
+      return res.status(400).json(error);
+    }
+
+    const userId = req.body.userId;
+    const token = req.body.token;
+
+    const user = await User.findById(userId).select({ password: 0 });
+
+    if (user && user.role === 'host') {
+      return res.status(200).json({ user, message: 'You are aleready host' });
+    }
+
+    if (user && user.confirmation_token === token) {
+      user.role = 'host';
+      const savedUser = await user.save();
+      return res.status(200).json({ user: savedUser, message: 'You are host now.' });
+    }
+  } catch (err) {
+    return res.status(400).json({ err });
   }
 };
 
