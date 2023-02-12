@@ -147,14 +147,12 @@ io.on('connection', (socket) => {
   socket.on('GET_RESULTS', async (data: IGetGameResultsPayload) => {
     const users = gameLogic.getGameUsers(data.gameId);
 
-    console.log('results: ', users);
-
     try {
       const gameDB = await Game.findById(data.gameId);
 
       if (gameDB) {
         const results = Object.values(users)
-          .filter((user) => user.id !== gameDB.host)
+          .filter((user) => user.id !== gameDB.host.toString())
           .sort((a, b) => b.points - a.points)
           .map((user) => {
             return {
