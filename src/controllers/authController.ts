@@ -2,6 +2,7 @@ import User, { IUser, IUserModel } from '../models/User.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
+import Joi from 'joi';
 
 const signJWTToken = (userId: string, role = 'user') => {
   return jwt.sign({ id: userId, role: role }, process.env.JWT_SECRET || 'jwt_secret', {
@@ -21,6 +22,19 @@ const signJWTRefreshToken = (userId: string, role = 'user') => {
 
 export const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const joiSchema = Joi.object({
+      name: Joi.string().min(1).max(60).required(),
+      email: Joi.string().email(),
+      password: Joi.string().min(4).required(),
+      image: Joi.string(),
+    });
+
+    const { error } = joiSchema.validate(req.body);
+
+    if (error) {
+      return res.status(400).send(error);
+    }
+
     const salt = bcrypt.genSaltSync(10);
     const hash = bcrypt.hashSync(req.body.password, salt);
     const newUser = new User({ ...req.body, password: hash });

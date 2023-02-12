@@ -160,6 +160,7 @@ io.on('connection', (socket) => {
             return {
               username: user.name,
               points: user.points,
+              user_id: user.id,
             };
           });
         const updateResults = await gameDB.updateOne({

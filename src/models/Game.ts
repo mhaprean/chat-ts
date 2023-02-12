@@ -19,6 +19,7 @@ export interface IGame extends DocumentResult<IGame> {
   results: {
     username: string;
     points: number;
+    user_id: string;
   }[];
   createdAt?: Date;
   updatedAt?: Date;
@@ -75,6 +76,9 @@ const GameSchema = new mongoose.Schema(
         },
         points: {
           type: Number,
+        },
+        user_id: {
+          type: String,
         },
       },
     ],
