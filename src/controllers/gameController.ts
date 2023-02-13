@@ -8,7 +8,7 @@ export const getAllGames = async (
   next: NextFunction
 ) => {
   try {
-    const games = await Game.find({ active: true }).select('-password');
+    const games = await Game.find({ active: true }).select('-password').populate('quiz', 'total');
 
     return res.status(200).json(games);
   } catch (error) {
@@ -26,7 +26,8 @@ export const getMyGames = async (
   try {
     const games = await Game.find({ participants: { $in: [userId] } })
       .select('-password')
-      .populate(['host']);
+      .populate(['host'])
+      .populate('quiz', 'total');
 
     return res.status(200).json(games);
   } catch (error) {
@@ -45,6 +46,7 @@ export const getMyGamesAsHost = async (
     const games = await Game.find({ host: userId })
       .select('-password')
       .populate(['host'])
+      .populate('quiz', 'total')
       .sort({ createdAt: -1 });
 
     return res.status(200).json(games);
@@ -110,7 +112,7 @@ export const getCurrentGame = async (
       const populatedGame = await Game.findById(id).populate(['quiz', 'host']);
       return res.status(200).json(populatedGame);
     } else {
-      const populatedGame = await Game.findById(id).populate(['host']);
+      const populatedGame = await Game.findById(id).populate(['host']).populate('quiz', 'total');
       return res.status(200).json(populatedGame);
     }
   } catch (error) {
