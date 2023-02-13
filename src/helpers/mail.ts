@@ -14,6 +14,7 @@ export const transporter = nodemailer.createTransport({
     user: process.env.EMAIL,
     pass: process.env.EMAIL_PASSWORD,
   },
+  from: process.env.EMAIL,
 });
 
 export const sendEmail = (email: string, userId: string, token: string) => {

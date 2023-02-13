@@ -100,6 +100,8 @@ export const profile = async (req: Request, res: Response, next: NextFunction) =
     const id = req.userId;
     const user = await User.findById(id).select({ password: 0 });
 
+    if (!user) return res.status(401).json({ message: 'Not authorized' });
+
     return res.status(200).json(user);
   } catch (error) {
     next(error);

@@ -12,7 +12,7 @@ const start = async () => {
     const PORT = process.env.PORT || 3000;
 
     server.listen(PORT, () => {
-      console.log('App started on port: '+ PORT)
+      console.log('App started on port: ' + PORT);
     });
   } catch (error) {
     console.error(error);

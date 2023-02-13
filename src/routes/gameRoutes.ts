@@ -4,6 +4,7 @@ import {
   getAllGames,
   getCurrentGame,
   getMyGames,
+  getMyGamesAsHost,
   joinGame,
 } from '../controllers/gameController';
 
@@ -14,6 +15,8 @@ const router = express.Router();
 router.get('/', [isAuth], getAllGames);
 
 router.get('/mygames', [isAuth], getMyGames);
+
+router.get('/hostedbyme', [isAuth, isHost], getMyGamesAsHost);
 
 // add game
 router.post('/create', [isAuth, isHost], createGame);
