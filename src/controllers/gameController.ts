@@ -108,13 +108,13 @@ export const getCurrentGame = async (
     if (!game) {
       return res.status(400).json({ error: 'wrong game id' });
     }
-    if (game.host.toString() === userId) {
+    if (game.host.toString() === userId || game.ended) {
       const populatedGame = await Game.findById(id).populate(['quiz', 'host']);
       return res.status(200).json(populatedGame);
-    } else {
-      const populatedGame = await Game.findById(id).populate(['host']).populate('quiz', 'total');
-      return res.status(200).json(populatedGame);
     }
+
+    const populatedGame = await Game.findById(id).populate(['host']).populate('quiz', 'total');
+    return res.status(200).json(populatedGame);
   } catch (error) {
     return res.status(400).json(error);
   }
