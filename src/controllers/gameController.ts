@@ -65,7 +65,7 @@ export const createGame = async (
 
     const joiSchema = Joi.object({
       title: Joi.string().min(3).max(60).required(),
-      password: Joi.string().min(6).max(6).required(),
+      password: Joi.string().min(4).max(4).required(),
       quiz_id: Joi.string(),
     });
 
