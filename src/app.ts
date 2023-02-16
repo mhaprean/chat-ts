@@ -17,6 +17,7 @@ import { Server } from 'socket.io';
 import Game from './models/Game';
 import gameLogic from './gameLogic';
 import Result from './models/Result';
+import resultRoutes from './routes/resultRoutes';
 
 const app = express();
 dotenv.config();
@@ -39,6 +40,8 @@ app.use('/api/quiz', quizRoutes);
 app.use('/api/games', gameRoutes);
 
 app.use('/api/users', userRoutes);
+
+app.use('/api/results', resultRoutes);
 
 app.get('/', (req, res) => {
   return res.send('welcome to our chat rest api.');
