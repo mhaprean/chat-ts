@@ -16,6 +16,7 @@ import http from 'http';
 import { Server } from 'socket.io';
 import Game from './models/Game';
 import gameLogic from './gameLogic';
+import Result from './models/Result';
 
 const app = express();
 dotenv.config();
@@ -151,25 +152,42 @@ io.on('connection', (socket) => {
       const gameDB = await Game.findById(data.gameId);
 
       if (gameDB) {
-        const results = Object.values(users)
+        const gameUsers = Object.values(users)
           .filter((user) => user.id !== gameDB.host.toString())
-          .sort((a, b) => b.points - a.points)
-          .map((user) => {
-            return {
-              username: user.name,
-              points: user.points,
-              user_id: user.id,
-            };
-          });
+          .sort((a, b) => b.points - a.points);
+
+        const gameResults = gameUsers.map((user) => {
+          return {
+            username: user.name,
+            points: user.points,
+            user_id: user.id,
+          };
+        });
         const updateResults = await gameDB.updateOne({
-          results: results,
+          results: gameResults,
           active: false,
           ended: true,
         });
 
         gameLogic.deleteGame({ gameId: data.gameId });
 
-        socket.broadcast.to(data.gameId).emit('QUIZ_ENDED', { results });
+        const resultsData = gameUsers.map((gameUser, idx) => {
+          const userResults = Object.values(gameUser.answers);
+
+          return {
+            user: gameUser.id,
+            game: data.gameId,
+            results: userResults,
+          };
+        });
+
+        for (let i = 0; i < resultsData.length; i++) {
+          const newResult = resultsData[i];
+
+          const insertResult = await Result.create(newResult);
+        }
+
+        socket.broadcast.to(data.gameId).emit('QUIZ_ENDED', { results: gameResults });
       }
     } catch (error) {
       console.log('error getting game results.');

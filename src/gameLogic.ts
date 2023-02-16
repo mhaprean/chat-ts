@@ -1,14 +1,23 @@
 import { IQuestion } from './app';
 
+interface IUserAnswer {
+  question_id: string;
+  answer: string;
+}
+
 interface IRoomUser {
   id: string;
   name: string;
   points: number;
+  answers: {
+    [key: string]: IUserAnswer;
+  };
 }
 
 interface IRoomGame {
   expectedAnswer: string;
   started: boolean;
+  currentQuestionId: string;
   currentQuestion: IQuestion | null;
   questionIdx: number;
   questionAnsweredBy: string[];
@@ -70,6 +79,7 @@ const joinGame = ({ userId, gameId, username, isHost }: IJoinGame) => {
       id: userId,
       name: username,
       points: 0,
+      answers: {},
     };
   }
 
@@ -92,6 +102,7 @@ const createGame = ({ userId, gameId, username, isHost }: ICreateGame) => {
       started: false,
       currentQuestion: null,
       questionAnsweredBy: [],
+      currentQuestionId: '',
       onlineUsers: [],
       questionIdx: 0,
     };
@@ -103,6 +114,7 @@ const startGame = ({ gameId, expectedAnswer, question }: IStartGame) => {
   if (games[gameId]) {
     games[gameId].expectedAnswer = expectedAnswer;
     games[gameId].currentQuestion = question;
+    games[gameId].currentQuestionId = question._id;
     games[gameId].started = true;
     games[gameId].questionAnsweredBy = [];
   }
@@ -112,6 +124,7 @@ const onNextQuestion = ({ gameId, expectedAnswer, question }: IStartGame) => {
   if (games[gameId]) {
     games[gameId].expectedAnswer = expectedAnswer;
     games[gameId].currentQuestion = question;
+    games[gameId].currentQuestionId = question._id;
     games[gameId].questionAnsweredBy = [];
     games[gameId].questionIdx = games[gameId].questionIdx + 1;
   }
@@ -122,6 +135,11 @@ const addAnswer = ({ gameId, userId, answerValue }: IAddAnswer) => {
     games[gameId].users[userId].points + (answerValue === games[gameId].expectedAnswer ? 1 : 0);
 
   games[gameId].questionAnsweredBy.push(userId);
+
+  games[gameId].users[userId].answers[games[gameId].currentQuestionId] = {
+    question_id: games[gameId].currentQuestionId,
+    answer: answerValue,
+  };
 };
 
 const deleteGame = ({ gameId }: IEndGame) => {
