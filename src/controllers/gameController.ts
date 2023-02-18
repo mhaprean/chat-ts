@@ -27,7 +27,8 @@ export const getMyGames = async (
     const games = await Game.find({ participants: { $in: [userId] } })
       .select('-password')
       .populate(['host'])
-      .populate('quiz', 'total');
+      .populate('quiz', 'total')
+      .sort({ createdAt: -1 });
 
     return res.status(200).json(games);
   } catch (error) {
