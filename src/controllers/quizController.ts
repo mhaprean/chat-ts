@@ -104,3 +104,18 @@ export const createQuiz = async (
   }
 };
 
+export const deleteQuiz = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+  const id = req.params.id;
+
+  try {
+    const result = await Quiz.findByIdAndDelete(id);
+
+    if (!result) {
+      return res.status(404).json({ message: 'Quiz not found' });
+    }
+
+    return res.status(200).json({ message: 'Quiz deleted successfully' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Error deleting quiz', error });
+  }
+};
