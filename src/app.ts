@@ -18,6 +18,7 @@ import Game from './models/Game';
 import gameLogic from './gameLogic';
 import Result from './models/Result';
 import resultRoutes from './routes/resultRoutes';
+import tournamentRoutes from './routes/tournamentRoutes';
 
 const app = express();
 dotenv.config();
@@ -42,6 +43,8 @@ app.use('/api/games', gameRoutes);
 app.use('/api/users', userRoutes);
 
 app.use('/api/results', resultRoutes);
+
+app.use('/api/tournaments', tournamentRoutes);
 
 app.get('/', (req, res) => {
   return res.send('welcome to our chat rest api.');
