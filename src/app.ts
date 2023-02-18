@@ -19,6 +19,7 @@ import gameLogic from './gameLogic';
 import Result from './models/Result';
 import resultRoutes from './routes/resultRoutes';
 import tournamentRoutes from './routes/tournamentRoutes';
+import Tournament from './models/Tournament';
 
 const app = express();
 dotenv.config();
@@ -191,6 +192,14 @@ io.on('connection', (socket) => {
           const newResult = resultsData[i];
 
           const insertResult = await Result.create(newResult);
+        }
+
+        if (gameDB.tournament) {
+          const newParticipants = gameResults.map((user) => user.user_id);
+          const updateTournament = await Tournament.updateOne(
+            { _id: gameDB.tournament },
+            { $addToSet: { participants: { $each: newParticipants } } }
+          );
         }
 
         socket.broadcast.to(data.gameId).emit('QUIZ_ENDED', { results: gameResults });
