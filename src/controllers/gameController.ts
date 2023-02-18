@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import Game, { IGame } from '../models/Game';
 import Joi from 'joi';
+import Tournament from '../models/Tournament';
 
 export const getAllGames = async (
   req: Request<{ id: string }>,
@@ -67,25 +68,36 @@ export const createGame = async (
     const joiSchema = Joi.object({
       title: Joi.string().min(3).max(60).required(),
       password: Joi.string().min(4).max(4).required(),
-      quiz_id: Joi.string(),
+      quiz: Joi.string(),
+      tournament: Joi.string().allow(''),
     });
 
     const { error } = joiSchema.validate(req.body);
 
     if (error) {
-      return res.status(400).send({ message: error });
+      return res.status(400).send({ message: error, ok: 'aa' });
     }
 
-    const { title, password, quiz_id } = req.body;
-    const newGame = {
+    const { title, password, quiz, tournament } = req.body;
+    let newGame: Partial<IGame> = {
       title,
       password: password,
       active: true,
-      quiz: quiz_id,
+      quiz: quiz,
       host: userId,
     };
 
+    if (tournament) {
+      newGame.tournament = tournament;
+    }
+
     const game = await Game.create(newGame);
+
+    if (tournament) {
+      const addGameToTournament = await Tournament.findByIdAndUpdate(tournament, {
+        $push: { games: game._id },
+      });
+    }
 
     return res.status(201).json(game);
   } catch (error) {
