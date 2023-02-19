@@ -79,10 +79,16 @@ export const getTournament = async (
   const userId = req.userId;
 
   try {
-    const tournament = await Tournament.findById(id).populate(['games', 'host']).populate({
-      path: 'participants',
-      select: '-password -confirmation_token -email -role', // exclude password field
-    });
+    const tournament = await Tournament.findById(id)
+      .populate('host')
+      .populate({
+        path: 'games',
+        options: { sort: { createdAt: -1 } }, // sort games by most recent
+      })
+      .populate({
+        path: 'participants',
+        select: '-password -confirmation_token -email -role', // exclude password field
+      });
 
     if (!tournament) {
       return res.status(400).json({ error: 'wrong tournament id' });
