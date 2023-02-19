@@ -9,7 +9,10 @@ export const getAllGames = async (
   next: NextFunction
 ) => {
   try {
-    const games = await Game.find({ active: true }).select('-password').populate('quiz', 'total');
+    const games = await Game.find({ active: true })
+      .select('-password')
+      .populate('quiz', 'total')
+      .populate('tournament', '_id title');
 
     return res.status(200).json(games);
   } catch (error) {
@@ -29,6 +32,7 @@ export const getMyGames = async (
       .select('-password')
       .populate(['host'])
       .populate('quiz', 'total')
+      .populate('tournament', '_id title')
       .sort({ createdAt: -1 });
 
     return res.status(200).json(games);
@@ -49,6 +53,7 @@ export const getMyGamesAsHost = async (
       .select('-password')
       .populate(['host'])
       .populate('quiz', 'total')
+      .populate('tournament', '_id title')
       .sort({ createdAt: -1 });
 
     return res.status(200).json(games);
