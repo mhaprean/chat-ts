@@ -63,7 +63,6 @@ const io = new Server(server, {
     methods: ['GET', 'POST', 'PUT'],
     credentials: true,
   },
-  pingTimeout: 160000,
 });
 
 interface ISubmitAnswerPayload {
