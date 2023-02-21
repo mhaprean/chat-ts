@@ -161,3 +161,23 @@ export const joinGame = async (req: Request<{ id: string }>, res: Response, next
     return res.status(400).json(error);
   }
 };
+
+export const deleteGame = async (
+  req: Request<{ id: string }>,
+  res: Response,
+  next: NextFunction
+) => {
+  const id = req.params.id;
+
+  try {
+    const result = await Game.findByIdAndDelete(id);
+
+    if (!result) {
+      return res.status(404).json({ message: 'Game not found' });
+    }
+
+    return res.status(200).json({ message: 'Game deleted successfully' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Error deleting game', error });
+  }
+};

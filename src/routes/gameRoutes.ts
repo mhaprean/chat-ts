@@ -1,6 +1,7 @@
 import express from 'express';
 import {
   createGame,
+  deleteGame,
   getAllGames,
   getCurrentGame,
   getMyGames,
@@ -24,5 +25,7 @@ router.post('/create', [isAuth, isHost], createGame);
 router.get('/:id', [isAuth], getCurrentGame);
 
 router.post('/join/:id', [isAuth], joinGame);
+
+router.delete('/:id', [isAuth, isHost], deleteGame);
 
 export default router;
