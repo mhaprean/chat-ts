@@ -1,6 +1,7 @@
 import express from 'express';
 import {
   createTournament,
+  deleteTournament,
   getMyTournaments,
   getMyTournamentsAsHost,
   getTournament,
@@ -18,5 +19,7 @@ router.get('/mytournaments', [isAuth], getMyTournaments);
 router.get('/hostedbyme', [isAuth, isHost], getMyTournamentsAsHost);
 
 router.get('/:id', [isAuth], getTournament);
+
+router.delete('/:id', [isAuth, isHost], deleteTournament);
 
 export default router;
