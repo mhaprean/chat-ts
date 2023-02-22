@@ -20,6 +20,7 @@ import Result from './models/Result';
 import resultRoutes from './routes/resultRoutes';
 import tournamentRoutes from './routes/tournamentRoutes';
 import Tournament from './models/Tournament';
+import { IQuiz } from './models/Quiz';
 
 const app = express();
 dotenv.config();
@@ -84,13 +85,12 @@ interface IJoinRoomPayload {
   username: string;
   userId: string;
   isHost: boolean;
+  quiz: IQuiz;
 }
 
 interface IStartGamePayload {
   gameId: string;
   userId: string;
-  question: IQuestion;
-  questionIdx: number;
 }
 
 interface INextQuestionPayload extends IStartGamePayload {}
@@ -115,6 +115,7 @@ io.on('connection', (socket) => {
       currentQuestion: null,
       questionIdx: 0,
       isHost: data.isHost,
+      quiz: data.quiz,
     });
 
     gameLogic.joinGame({
@@ -149,6 +150,11 @@ io.on('connection', (socket) => {
 
   socket.on('SUBMIT_ANSWER', (data: ISubmitAnswerPayload) => {
     gameLogic.addAnswer({ gameId: data.gameId, userId: data.userId, answerValue: data.answer });
+
+    // Send message to participant
+    socket.emit('ANSWER_SUBMITED', {
+      message: `answer submited: ${data.gameId}`,
+    });
   });
 
   socket.on('GET_RESULTS', async (data: IGetGameResultsPayload) => {
@@ -209,26 +215,39 @@ io.on('connection', (socket) => {
   });
 
   socket.on('game_started', (data: IStartGamePayload) => {
-    console.log('game started', data);
     gameLogic.startGame({
       gameId: data.gameId,
-      expectedAnswer: data.question.correct_answer,
-      question: data.question,
-      questionIdx: data.questionIdx,
     });
 
-    socket.broadcast.to(data.gameId).emit('QUIZ_STARTED', data);
+    const game = gameLogic.getCurrentGame(data.gameId);
+
+    const gameStartedPayload = {
+      question: game?.currentQuestion,
+      questionIdx: game?.questionIdx,
+    };
+
+    socket.broadcast.to(data.gameId).emit('QUIZ_STARTED', gameStartedPayload);
+
+    // Send message to the host
+    socket.emit('QUIZ_STARTED', gameStartedPayload);
   });
 
   socket.on('next_question', (data: INextQuestionPayload) => {
     gameLogic.onNextQuestion({
       gameId: data.gameId,
-      expectedAnswer: data.question.correct_answer,
-      question: data.question,
-      questionIdx: data.questionIdx,
     });
 
-    socket.broadcast.to(data.gameId).emit('NEXT_QUESTION', data);
+    const game = gameLogic.getCurrentGame(data.gameId);
+
+    const nextQuestionPayload = {
+      question: game?.currentQuestion,
+      questionIdx: game?.questionIdx,
+    };
+
+    socket.broadcast.to(data.gameId).emit('NEXT_QUESTION', nextQuestionPayload);
+
+    // Send message to the host
+    socket.emit('NEXT_QUESTION', nextQuestionPayload);
   });
 
   socket.on('ROOM_CREATED', () => {

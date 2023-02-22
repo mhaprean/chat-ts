@@ -1,4 +1,5 @@
 import { IQuestion } from './app';
+import { IQuiz } from './models/Quiz';
 
 interface IUserAnswer {
   question_id: string;
@@ -22,6 +23,7 @@ interface IRoomGame {
   questionIdx: number;
   questionAnsweredBy: string[];
   onlineUsers: string[];
+  quiz: IQuiz;
   users: {
     [key: string]: IRoomUser;
   };
@@ -33,9 +35,6 @@ interface IGames {
 
 interface IStartGame {
   gameId: string;
-  expectedAnswer: string;
-  question: IQuestion;
-  questionIdx: number;
 }
 
 interface IEndGame {
@@ -62,6 +61,7 @@ interface ICreateGame {
   isHost: boolean;
   currentQuestion: IQuestion | null;
   questionIdx: number;
+  quiz: IQuiz;
 }
 
 const games: IGames = {};
@@ -94,7 +94,7 @@ const leaveGame = ({ userId, gameId, username }: IJoinGame) => {
   }
 };
 
-const createGame = ({ userId, gameId, username, isHost }: ICreateGame) => {
+const createGame = ({ userId, gameId, username, isHost, quiz }: ICreateGame) => {
   if (!games[gameId]) {
     games[gameId] = {
       users: {},
@@ -105,28 +105,39 @@ const createGame = ({ userId, gameId, username, isHost }: ICreateGame) => {
       currentQuestionId: '',
       onlineUsers: [],
       questionIdx: 0,
+      quiz: quiz,
     };
+  }
+
+  if (games[gameId] && isHost) {
+    games[gameId].quiz = quiz;
   }
   joinGame({ userId, gameId, username, isHost });
 };
 
-const startGame = ({ gameId, expectedAnswer, question }: IStartGame) => {
-  if (games[gameId]) {
-    games[gameId].expectedAnswer = expectedAnswer;
+const startGame = ({ gameId }: IStartGame) => {
+  if (games[gameId] && games[gameId].quiz) {
+    const question = games[gameId].quiz.questions[games[gameId].questionIdx];
+
     games[gameId].currentQuestion = question;
+    games[gameId].expectedAnswer = question.correct_answer;
     games[gameId].currentQuestionId = question._id;
     games[gameId].started = true;
     games[gameId].questionAnsweredBy = [];
   }
 };
 
-const onNextQuestion = ({ gameId, expectedAnswer, question }: IStartGame) => {
+const onNextQuestion = ({ gameId }: IStartGame) => {
   if (games[gameId]) {
-    games[gameId].expectedAnswer = expectedAnswer;
-    games[gameId].currentQuestion = question;
-    games[gameId].currentQuestionId = question._id;
+    const newQuestionIdx = games[gameId].questionIdx + 1;
+
+    const newQuestion = games[gameId].quiz.questions[newQuestionIdx];
+
+    games[gameId].expectedAnswer = newQuestion.correct_answer;
+    games[gameId].currentQuestion = newQuestion;
+    games[gameId].currentQuestionId = newQuestion._id;
     games[gameId].questionAnsweredBy = [];
-    games[gameId].questionIdx = games[gameId].questionIdx + 1;
+    games[gameId].questionIdx = newQuestionIdx;
   }
 };
 

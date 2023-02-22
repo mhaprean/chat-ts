@@ -8,6 +8,7 @@ export interface IQuizQuestion {
   question: string;
   answers: string[];
   correct_answer: string;
+  _id: string;
 }
 
 export interface IQuiz extends DocumentResult<IQuiz> {
