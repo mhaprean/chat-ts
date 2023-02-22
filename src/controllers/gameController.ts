@@ -170,11 +170,17 @@ export const deleteGame = async (
   const id = req.params.id;
 
   try {
-    const result = await Game.findByIdAndDelete(id);
+    const game = await Game.findById(id);
 
-    if (!result) {
+    if (!game) {
       return res.status(404).json({ message: 'Game not found' });
     }
+
+    // Remove the game from any tournaments it belongs to
+    await Tournament.updateOne({ games: id }, { $pull: { games: id } });
+
+    // Delete the game
+    await game.delete();
 
     return res.status(200).json({ message: 'Game deleted successfully' });
   } catch (error) {
