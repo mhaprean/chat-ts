@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import Game, { IGame } from '../models/Game';
 import Joi from 'joi';
 import Tournament from '../models/Tournament';
+import Result from '../models/Result';
 
 export const getAllGames = async (
   req: Request<{ id: string }>,
@@ -175,6 +176,9 @@ export const deleteGame = async (
     if (!game) {
       return res.status(404).json({ message: 'Game not found' });
     }
+
+    // Delete all results related to the game
+    await Result.deleteMany({ game: id });
 
     // Remove the game from any tournaments it belongs to
     await Tournament.updateOne({ games: id }, { $pull: { games: id } });
