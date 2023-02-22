@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import Tournament, { ITournament } from '../models/Tournament';
 import Joi from 'joi';
+import Game from '../models/Game';
 
 export const createTournament = async (
   req: Request<{}, {}, ITournament>,
@@ -135,11 +136,17 @@ export const deleteTournament = async (
   const id = req.params.id;
 
   try {
-    const result = await Tournament.findByIdAndDelete(id);
+    const tournament = await Tournament.findById(id);
 
-    if (!result) {
+    if (!tournament) {
       return res.status(404).json({ message: 'Tournament not found' });
     }
+
+    const gameIds = tournament.games;
+
+    await Game.updateMany({ _id: { $in: gameIds } }, { $unset: { tournament: 1 } });
+
+    await tournament.remove();
 
     return res.status(200).json({ message: 'Tournament deleted successfully' });
   } catch (error) {
