@@ -59,8 +59,6 @@ interface ICreateGame {
   username: string;
   gameId: string;
   isHost: boolean;
-  currentQuestion: IQuestion | null;
-  questionIdx: number;
   quiz: IQuiz;
 }
 
@@ -88,7 +86,7 @@ const joinGame = ({ userId, gameId, username, isHost }: IJoinGame) => {
   }
 };
 
-const leaveGame = ({ userId, gameId, username }: IJoinGame) => {
+const leaveGame = ({ userId, gameId }: IJoinGame) => {
   if (games[gameId] && games[gameId].onlineUsers.includes(userId)) {
     games[gameId].onlineUsers = games[gameId].onlineUsers.filter((user, idx) => user !== userId);
   }
@@ -142,15 +140,17 @@ const onNextQuestion = ({ gameId }: IStartGame) => {
 };
 
 const addAnswer = ({ gameId, userId, answerValue }: IAddAnswer) => {
-  games[gameId].users[userId].points =
-    games[gameId].users[userId].points + (answerValue === games[gameId].expectedAnswer ? 1 : 0);
+  if (!games[gameId].questionAnsweredBy.includes(userId)) {
+    games[gameId].users[userId].points =
+      games[gameId].users[userId].points + (answerValue === games[gameId].expectedAnswer ? 1 : 0);
 
-  games[gameId].questionAnsweredBy.push(userId);
+    games[gameId].questionAnsweredBy.push(userId);
 
-  games[gameId].users[userId].answers[games[gameId].currentQuestionId] = {
-    question_id: games[gameId].currentQuestionId,
-    answer: answerValue,
-  };
+    games[gameId].users[userId].answers[games[gameId].currentQuestionId] = {
+      question_id: games[gameId].currentQuestionId,
+      answer: answerValue,
+    };
+  }
 };
 
 const deleteGame = ({ gameId }: IEndGame) => {

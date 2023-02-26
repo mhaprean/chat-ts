@@ -69,7 +69,6 @@ const io = new Server(server, {
 interface ISubmitAnswerPayload {
   gameId: string;
   userId: string;
-  questionIdx: number;
   answer: string;
 }
 
@@ -112,8 +111,6 @@ io.on('connection', (socket) => {
       gameId: data.gameId,
       userId: data.userId,
       username: data.username,
-      currentQuestion: null,
-      questionIdx: 0,
       isHost: data.isHost,
       quiz: data.quiz,
     });
@@ -127,12 +124,10 @@ io.on('connection', (socket) => {
 
     const game = gameLogic.getCurrentGame(data.gameId);
 
-    socket.broadcast.to(data.gameId).emit('USER_JOINED', { game });
-
     // Send message to the user who just joined
     socket.emit('WELCOME_BACK', {
       message: `Welcome to room ${data.gameId}`,
-      game: { ...game, expectedAnswer: '?' },
+      game: { ...game, quiz: null, expectedAnswer: '?' },
     });
   });
 
@@ -143,9 +138,6 @@ io.on('connection', (socket) => {
       username: data.username,
       isHost: data.isHost,
     });
-    const users = gameLogic.getGameOnlineUsers(data.gameId);
-
-    socket.broadcast.to(data.gameId).emit('USER_LEFT', { countUsers: users.length });
   });
 
   socket.on('SUBMIT_ANSWER', (data: ISubmitAnswerPayload) => {
@@ -252,6 +244,7 @@ io.on('connection', (socket) => {
 
   socket.on('ROOM_CREATED', () => {
     socket.broadcast.emit('SHOULD_REFETCH_ROOMS');
+    socket.emit('SHOULD_REFETCH_ROOMS');
   });
 
   socket.on('disconnect', (reason) => {
