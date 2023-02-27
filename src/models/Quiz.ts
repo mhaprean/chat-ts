@@ -19,6 +19,7 @@ export interface IQuiz extends DocumentResult<IQuiz> {
   type: string;
   total: number;
   creator: string;
+  public: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }

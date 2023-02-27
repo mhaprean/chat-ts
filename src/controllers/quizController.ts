@@ -28,7 +28,7 @@ export const getMyQuizes = async (
   }
 
   try {
-    const quizes = await Quiz.find({ creator: userId }).select('-questions');
+    const quizes = await Quiz.find({ creator: userId, public: false }).select('-questions');
 
     return res.status(200).json(quizes);
   } catch (error) {
@@ -92,6 +92,7 @@ export const createQuiz = async (
       difficulty: req.body.difficulty,
       questions: req.body.questions,
       creator: userId,
+      public: false,
       total: req.body.questions.length,
     };
 
@@ -104,7 +105,11 @@ export const createQuiz = async (
   }
 };
 
-export const deleteQuiz = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+export const deleteQuiz = async (
+  req: Request<{ id: string }>,
+  res: Response,
+  next: NextFunction
+) => {
   const id = req.params.id;
 
   try {
