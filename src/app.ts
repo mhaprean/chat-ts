@@ -129,15 +129,11 @@ io.on('connection', (socket) => {
       message: `Welcome to room ${data.gameId}`,
       game: { ...game, quiz: null, expectedAnswer: '?' },
     });
-  });
 
-  socket.on('leave_room', async (data: IJoinRoomPayload) => {
-    gameLogic.leaveGame({
-      gameId: data.gameId,
-      userId: data.userId,
-      username: data.username,
-      isHost: data.isHost,
-    });
+    if (game) {
+      const totalUsers = Object.keys(game.users);
+      socket.broadcast.to(data.gameId).emit('USER_JOINED', { totalUsers: totalUsers.length });
+    }
   });
 
   socket.on('SUBMIT_ANSWER', (data: ISubmitAnswerPayload) => {

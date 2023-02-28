@@ -22,7 +22,6 @@ interface IRoomGame {
   currentQuestion: IQuestion | null;
   questionIdx: number;
   questionAnsweredBy: string[];
-  onlineUsers: string[];
   quiz: IQuiz;
   users: {
     [key: string]: IRoomUser;
@@ -72,23 +71,13 @@ const getCurrentGame = (gameId: string) => {
 };
 
 const joinGame = ({ userId, gameId, username, isHost }: IJoinGame) => {
-  if (games[gameId] && !games[gameId].users[userId]) {
+  if (!isHost && games[gameId] && !games[gameId].users[userId]) {
     games[gameId].users[userId] = {
       id: userId,
       name: username,
       points: 0,
       answers: {},
     };
-  }
-
-  if (games[gameId] && !games[gameId].onlineUsers.includes(userId)) {
-    games[gameId].onlineUsers = [...games[gameId].onlineUsers, userId];
-  }
-};
-
-const leaveGame = ({ userId, gameId }: IJoinGame) => {
-  if (games[gameId] && games[gameId].onlineUsers.includes(userId)) {
-    games[gameId].onlineUsers = games[gameId].onlineUsers.filter((user, idx) => user !== userId);
   }
 };
 
@@ -101,7 +90,6 @@ const createGame = ({ userId, gameId, username, isHost, quiz }: ICreateGame) => 
       currentQuestion: null,
       questionAnsweredBy: [],
       currentQuestionId: '',
-      onlineUsers: [],
       questionIdx: 0,
       quiz: quiz,
     };
@@ -164,24 +152,15 @@ const getGameUsers = (gameId: string) => {
   return {};
 };
 
-const getGameOnlineUsers = (gameId: string) => {
-  if (games[gameId] && games[gameId].onlineUsers) {
-    return games[gameId].onlineUsers;
-  }
-  return [];
-};
-
 const gameModule = {
   createGame,
   joinGame,
-  leaveGame,
   startGame,
   onNextQuestion,
   addAnswer,
   getGameUsers,
   deleteGame,
   getCurrentGame,
-  getGameOnlineUsers,
 };
 
 export default gameModule;
