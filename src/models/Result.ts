@@ -8,7 +8,7 @@ export interface IResult extends DocumentResult<IResult> {
   user: string;
   game: string;
   results: {
-    answer: number;
+    answer: string;
     question_id: string;
   }[];
   createdAt?: Date;
