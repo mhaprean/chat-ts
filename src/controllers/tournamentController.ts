@@ -85,6 +85,10 @@ export const getTournament = async (
       .populate({
         path: 'games',
         options: { sort: { createdAt: -1 } }, // sort games by most recent
+        populate: {
+          path: 'quiz',
+          select: 'title',
+        },
       })
       .populate({
         path: 'participants',
