@@ -187,13 +187,19 @@ io.on('connection', (socket) => {
           const insertResult = await Result.create(newResult);
         }
 
+        const newParticipants = gameResults.map((user) => user.user_id);
+
         if (gameDB.tournament) {
-          const newParticipants = gameResults.map((user) => user.user_id);
           const updateTournament = await Tournament.updateOne(
             { _id: gameDB.tournament },
             { $addToSet: { participants: { $each: newParticipants } } }
           );
         }
+
+        const updateGame = await Game.updateOne(
+          { _id: data.gameId },
+          { $addToSet: { participants: { $each: newParticipants } } }
+        );
 
         socket.broadcast.to(data.gameId).emit('QUIZ_ENDED', { results: gameResults });
       }
