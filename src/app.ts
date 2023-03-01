@@ -152,26 +152,18 @@ io.on('connection', (socket) => {
       const gameDB = await Game.findById(data.gameId);
 
       if (gameDB) {
-        const gameUsers = Object.values(users)
-          .filter((user) => user.id !== gameDB.host.toString())
-          .sort((a, b) => b.points - a.points);
+        const gameResults = gameLogic.getGameResults(data.gameId);
 
-        const gameResults = gameUsers.map((user) => {
-          return {
-            username: user.name,
-            points: user.points,
-            user_id: user.id,
-          };
-        });
         const updateResults = await gameDB.updateOne({
           results: gameResults,
           active: false,
           ended: true,
         });
 
-        gameLogic.deleteGame({ gameId: data.gameId });
+        const gameUsers = gameLogic.getGameUsers(data.gameId);
+        const usersArray = Object.values(gameUsers);
 
-        const resultsData = gameUsers.map((gameUser, idx) => {
+        const resultsData = usersArray.map((gameUser, idx) => {
           const userResults = Object.values(gameUser.answers);
 
           return {
@@ -187,19 +179,21 @@ io.on('connection', (socket) => {
           const insertResult = await Result.create(newResult);
         }
 
-        const newParticipants = gameResults.map((user) => user.user_id);
+        const participantIds = gameResults.map((user) => user.user_id);
 
         if (gameDB.tournament) {
           const updateTournament = await Tournament.updateOne(
             { _id: gameDB.tournament },
-            { $addToSet: { participants: { $each: newParticipants } } }
+            { $addToSet: { participants: { $each: participantIds } } }
           );
         }
 
         const updateGame = await Game.updateOne(
           { _id: data.gameId },
-          { $addToSet: { participants: { $each: newParticipants } } }
+          { $addToSet: { participants: { $each: participantIds } } }
         );
+
+        gameLogic.deleteGame({ gameId: data.gameId });
 
         socket.broadcast.to(data.gameId).emit('QUIZ_ENDED', { results: gameResults });
       }

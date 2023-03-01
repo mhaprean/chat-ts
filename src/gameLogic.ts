@@ -129,9 +129,6 @@ const onNextQuestion = ({ gameId }: IStartGame) => {
 
 const addAnswer = ({ gameId, userId, answerValue }: IAddAnswer) => {
   if (!games[gameId].questionAnsweredBy.includes(userId)) {
-    games[gameId].users[userId].points =
-      games[gameId].users[userId].points + (answerValue === games[gameId].expectedAnswer ? 1 : 0);
-
     games[gameId].questionAnsweredBy.push(userId);
 
     games[gameId].users[userId].answers[games[gameId].currentQuestionId] = {
@@ -152,6 +149,40 @@ const getGameUsers = (gameId: string) => {
   return {};
 };
 
+const getGameQuestions = (gameId: string) => {
+  const questionss = games[gameId].quiz.questions;
+  const questions: { [key: string]: string } = {};
+
+  questionss.forEach((q) => {
+    questions[q._id] = q.correct_answer;
+  });
+
+  return questions;
+};
+
+const getGameResults = (gameId: string) => {
+  const questions = getGameQuestions(gameId);
+  const users = getGameUsers(gameId);
+
+  const gameUsers = Object.values(users)
+    .map((user) => {
+      let points = 0;
+
+      const userAnswers = Object.values(user.answers);
+
+      userAnswers.forEach((ans) => {
+        if (ans.answer === questions[ans.question_id]) {
+          points++;
+        }
+      });
+
+      return { username: user.name, points, user_id: user.id };
+    })
+    .sort((a, b) => b.points - a.points);
+
+  return gameUsers;
+};
+
 const gameModule = {
   createGame,
   joinGame,
@@ -161,6 +192,7 @@ const gameModule = {
   getGameUsers,
   deleteGame,
   getCurrentGame,
+  getGameResults,
 };
 
 export default gameModule;
