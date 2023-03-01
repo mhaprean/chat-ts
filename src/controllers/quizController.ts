@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import Quiz, { IQuiz, IQuizQuestion } from '../models/Quiz';
 import Joi from 'joi';
+import Game from '../models/Game';
+import Result from '../models/Result';
 
 export const getAllQuizes = async (
   req: Request<{ id: string }>,
@@ -113,6 +115,14 @@ export const deleteQuiz = async (
   const id = req.params.id;
 
   try {
+    const gamesToDelete = await Game.find({ quiz: id });
+
+    const ids = gamesToDelete.map((game) => game._id);
+
+    const deleteResults = await Result.deleteMany({ game: { $in: ids } });
+
+    const deleteGames = await Game.deleteMany({ quiz: id });
+
     const result = await Quiz.findByIdAndDelete(id);
 
     if (!result) {
