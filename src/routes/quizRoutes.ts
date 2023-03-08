@@ -1,5 +1,5 @@
 import express from 'express';
-import { createQuiz, getAllQuizes, getQuizById, getMyQuizes, deleteQuiz } from '../controllers/quizController';
+import { createQuiz, getAllQuizes, getQuizById, getMyQuizes, deleteQuiz, publishQuiz } from '../controllers/quizController';
 
 import { isAuth } from '../middleware/authMiddleware';
 
@@ -12,6 +12,8 @@ router.get('/myquizes', [isAuth], getMyQuizes);
 // router.get('/:id', getQuizById);
 
 router.delete('/:id', deleteQuiz);
+
+router.post('/publish/:id', publishQuiz);
 
 // get all public quizes
 router.get('/all', getAllQuizes);

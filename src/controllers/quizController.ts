@@ -134,3 +134,29 @@ export const deleteQuiz = async (
     return res.status(500).json({ message: 'Error deleting quiz', error });
   }
 };
+
+
+export const publishQuiz = async (
+  req: Request<{ id: string }>,
+  res: Response,
+  next: NextFunction
+) => {
+  const id = req.params.id;
+
+  try {
+
+    const existingQuiz = await Quiz.findById(id);
+
+    if (!existingQuiz) {
+      return res.status(404).json({ message: 'Quiz not found' });
+    }
+
+    existingQuiz.public = !existingQuiz.public;
+
+    await existingQuiz.save();
+
+    return res.status(200).json({ message: 'Quiz published successfully' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Error deleting quiz', error });
+  }
+};
