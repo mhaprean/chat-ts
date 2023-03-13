@@ -107,32 +107,41 @@ io.on('connection', (socket) => {
       `User with ID: ${socket.id} joined room: ${data.gameId}. user db is: ${data.userId}`
     );
 
-    gameLogic.createGame({
-      gameId: data.gameId,
-      userId: data.userId,
-      username: data.username,
-      isHost: data.isHost,
-      quiz: data.quiz,
-    });
+    const isGameEnded = gameLogic.isGameEnded(data.gameId);
 
-    gameLogic.joinGame({
-      gameId: data.gameId,
-      userId: data.userId,
-      username: data.username,
-      isHost: data.isHost,
-    });
+    // the game existed and is ended, we need to inform the client to refetch
+    if (isGameEnded) {
+      socket.broadcast.emit('SHOULD_REFETCH_ROOMS');
+      socket.emit('SHOULD_REFETCH_ROOMS');
+      socket.emit('QUIZ_ENDED', { results: [] });
+    } else {
+      gameLogic.createGame({
+        gameId: data.gameId,
+        userId: data.userId,
+        username: data.username,
+        isHost: data.isHost,
+        quiz: data.quiz,
+      });
 
-    const game = gameLogic.getCurrentGame(data.gameId);
+      gameLogic.joinGame({
+        gameId: data.gameId,
+        userId: data.userId,
+        username: data.username,
+        isHost: data.isHost,
+      });
 
-    // Send message to the user who just joined
-    socket.emit('WELCOME_BACK', {
-      message: `Welcome to room ${data.gameId}`,
-      game: { ...game, quiz: null, expectedAnswer: '?' },
-    });
+      const game = gameLogic.getCurrentGame(data.gameId);
 
-    if (game) {
-      const totalUsers = Object.keys(game.users);
-      socket.broadcast.to(data.gameId).emit('USER_JOINED', { totalUsers: totalUsers.length });
+      // Send message to the user who just joined
+      socket.emit('WELCOME_BACK', {
+        message: `Welcome to room ${data.gameId}`,
+        game: { ...game, quiz: null, expectedAnswer: '?' },
+      });
+
+      if (game) {
+        const totalUsers = Object.keys(game.users);
+        socket.broadcast.to(data.gameId).emit('USER_JOINED', { totalUsers: totalUsers.length });
+      }
     }
   });
 

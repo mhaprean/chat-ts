@@ -62,6 +62,7 @@ interface ICreateGame {
 }
 
 const games: IGames = {};
+const finishedGames: string[] = [];
 
 const getCurrentGame = (gameId: string) => {
   if (games[gameId]) {
@@ -164,6 +165,8 @@ const getGameResults = (gameId: string) => {
   const questions = getGameQuestions(gameId);
   const users = getGameUsers(gameId);
 
+  finishedGames.push(gameId);
+
   const gameUsers = Object.values(users)
     .map((user) => {
       let points = 0;
@@ -183,6 +186,10 @@ const getGameResults = (gameId: string) => {
   return gameUsers;
 };
 
+const isGameEnded = (gameId: string) => {
+  return finishedGames.includes(gameId);
+};
+
 const gameModule = {
   createGame,
   joinGame,
@@ -193,6 +200,7 @@ const gameModule = {
   deleteGame,
   getCurrentGame,
   getGameResults,
+  isGameEnded,
 };
 
 export default gameModule;
