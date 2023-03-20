@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
 import Joi from 'joi';
-import { sendEmail } from '../helpers/mail.js';
+import { sendEmail, sendResetPasswordEmail } from '../helpers/mail.js';
 
 const signJWTToken = (userId: string, role = 'user') => {
   return jwt.sign({ id: userId, role: role }, process.env.JWT_SECRET || 'jwt_secret', {
@@ -98,7 +98,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
 export const profile = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = req.userId;
-    const user = await User.findById(id).select({ password: 0 });
+    const user = await User.findById(id).select({ password: 0, reset_password_token: 0 });
 
     if (!user) return res.status(401).json({ message: 'Not authorized' });
 
@@ -171,11 +171,89 @@ export const refreshToken = async (req: Request, res: Response, next: NextFuncti
   });
 };
 
+export const forgotPassword = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const joiSchema = Joi.object({
+      email: Joi.string().email().required(),
+    });
+
+    const { error } = joiSchema.validate(req.body);
+
+    if (error) {
+      return res.status(400).send(error);
+    }
+
+    const user = await User.findOne({ email: req.body.email });
+    if (!user) return res.status(400).json({ message: 'Wrong email adress.' });
+
+    const salt = bcrypt.genSaltSync(10);
+    const hash = bcrypt.hashSync(req.body.email, salt);
+
+    const reset_password_token = bcrypt
+      .hashSync(hash.slice(0, 10), bcrypt.genSaltSync(5))
+      .replace(/[^A-Za-z0-9]/g, '');
+
+    user.reset_password_token = reset_password_token;
+
+    const userRes = await user.save();
+
+    sendResetPasswordEmail(req.body.email, user.id, reset_password_token);
+
+    return res
+      .status(200)
+      .json({ message: `An email with a reset link was sent to ${req.body.email}` });
+  } catch (error) {
+    return res.status(400).json({ error });
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const joiSchema = Joi.object({
+      userId: Joi.string().required(),
+      token: Joi.string().required(),
+      password: Joi.string().min(4).required(),
+    });
+
+    const { error } = joiSchema.validate(req.body);
+
+    if (error) {
+      return res.status(400).json(error);
+    }
+
+    const userId = req.body.userId;
+    const token = req.body.token;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(400).json({ message: 'user id is not valid.' });
+    }
+
+    const salt = bcrypt.genSaltSync(10);
+    const hash = bcrypt.hashSync(req.body.password, salt);
+
+    user.password = hash;
+
+    if (user && user.reset_password_token === token) {
+      user.reset_password_token = '';
+      const userRes = await user.save();
+
+      return res.status(200).json({ message: 'Password updated.' });
+    }
+  } catch (error) {
+    return res.status(400).json({ error });
+  }
+};
+
 const authController = {
   register,
   login,
   profile,
   refreshToken,
+  confirmAccount,
+  forgotPassword,
+  resetPassword,
 };
 
 export default authController;
