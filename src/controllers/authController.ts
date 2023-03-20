@@ -218,7 +218,7 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
     const { error } = joiSchema.validate(req.body);
 
     if (error) {
-      return res.status(400).json(error);
+      return res.status(400).json({ message: error.message });
     }
 
     const userId = req.body.userId;
@@ -227,7 +227,7 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
     const user = await User.findById(userId);
 
     if (!user) {
-      return res.status(400).json({ message: 'user id is not valid.' });
+      return res.status(400).json({ message: 'User id is not valid.' });
     }
 
     const salt = bcrypt.genSaltSync(10);
@@ -240,6 +240,8 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
       const userRes = await user.save();
 
       return res.status(200).json({ message: 'Password updated.' });
+    } else {
+      return res.status(400).json({ message: 'Invalid reset token.' });
     }
   } catch (error) {
     return res.status(400).json({ error });
