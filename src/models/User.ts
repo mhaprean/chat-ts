@@ -11,6 +11,7 @@ export interface IUser extends DocumentResult<IUser> {
   image?: string;
   role: string;
   confirmation_token: string;
+  reset_password_token: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -41,6 +42,9 @@ const UserSchema = new mongoose.Schema(
       default: 'user',
     },
     confirmation_token: {
+      type: String,
+    },
+    reset_password_token: {
       type: String,
     },
   },
