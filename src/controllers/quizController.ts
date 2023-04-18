@@ -49,7 +49,10 @@ export const getQuizById = async (
 
     if (quiz) {
       const ques = quiz.questions.map((question) => {
-        return { question: question.question, answers: question.answers, correct_answer: '?' };
+        return {
+          ...question,
+          correct_answer: '?',
+        };
       });
 
       return res.status(200).json({ ...quiz._doc, questions: ques });
@@ -98,6 +101,8 @@ export const createQuiz = async (
       total: req.body.questions.length,
     };
 
+    console.log('!!!! newQuiz ', newQuiz);
+
     const quiz = await Quiz.create(newQuiz);
 
     return res.status(201).json(quiz);
@@ -135,7 +140,6 @@ export const deleteQuiz = async (
   }
 };
 
-
 export const publishQuiz = async (
   req: Request<{ id: string }>,
   res: Response,
@@ -144,7 +148,6 @@ export const publishQuiz = async (
   const id = req.params.id;
 
   try {
-
     const existingQuiz = await Quiz.findById(id);
 
     if (!existingQuiz) {

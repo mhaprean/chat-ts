@@ -9,6 +9,8 @@ export interface IQuizQuestion {
   answers: string[];
   correct_answer: string;
   _id: string;
+  image: string;
+  song: string;
 }
 
 export interface IQuiz extends DocumentResult<IQuiz> {
@@ -42,6 +44,12 @@ const QuizSchema = new mongoose.Schema(
           },
         ],
         correct_answer: {
+          type: String,
+        },
+        image: {
+          type: String,
+        },
+        song: {
           type: String,
         },
       },
