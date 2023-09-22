@@ -11,6 +11,7 @@ export interface IQuizQuestion {
   _id: string;
   image: string;
   song: string;
+  video: string;
 }
 
 export interface IQuiz extends DocumentResult<IQuiz> {
@@ -50,6 +51,9 @@ const QuizSchema = new mongoose.Schema(
           type: String,
         },
         song: {
+          type: String,
+        },
+        video: {
           type: String,
         },
       },

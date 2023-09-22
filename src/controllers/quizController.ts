@@ -101,8 +101,6 @@ export const createQuiz = async (
       total: req.body.questions.length,
     };
 
-    console.log('!!!! newQuiz ', newQuiz);
-
     const quiz = await Quiz.create(newQuiz);
 
     return res.status(201).json(quiz);
